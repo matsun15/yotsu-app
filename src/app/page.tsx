@@ -1,6 +1,65 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+
+type QuizRow = {
+  id: number;
+  question: string;
+  choices: string[];
+  correct_index: number;
+  explanations: string[];
+};
 
 export default function Home() {
+  const [quiz, setQuiz] = useState<QuizRow | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [answered, setAnswered] = useState(false);
+
+  async function loadRandomQuiz() {
+    setLoading(true);
+    setSelectedIndex(null);
+    setAnswered(false);
+
+    const { data, error } = await supabase
+      .from("quiz")
+      .select("id, question, choices, correct_index, explanations");
+
+    if (error) {
+      console.error(error);
+      setQuiz(null);
+      setLoading(false);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setQuiz(null);
+      setLoading(false);
+      return;
+    }
+
+    const random = data[Math.floor(Math.random() * data.length)] as QuizRow;
+    setQuiz(random);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadRandomQuiz();
+  }, []);
+
+  function handleSelect(index: number) {
+    if (answered) return;
+    setSelectedIndex(index);
+  }
+
+  function handleSubmit() {
+    if (selectedIndex === null) return;
+    setAnswered(true);
+  }
+
+  const isCorrect = answered && selectedIndex !== null && quiz && selectedIndex === quiz.correct_index;
+
   return (
     <div className="min-h-screen bg-zinc-50 font-sans text-slate-900">
       {/* ヘッダー（Matchuda風の黒背景） */}
@@ -28,37 +87,99 @@ export default function Home() {
           ))}
         </div>
 
-        {/* プレミアムセクション（全選択肢解説付き） */}
+        {/* クイズエリア */}
         <section className="mb-12">
-          <div className="mb-6 flex items-center justify-center">
+          <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold tracking-tight">プレミアム学習</h2>
+            <button
+              onClick={loadRandomQuiz}
+              disabled={loading}
+              className="rounded-sm bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
+            >
+              {loading ? "読込中..." : "次の問題"}
+            </button>
           </div>
-          <p className="mb-6 text-center text-sm text-red-600 font-semibold">
+          <p className="mb-6 text-center text-sm font-semibold text-red-600">
             「解きごたえ」と「全選択肢解説」で合格を確実に。
           </p>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {[
-              { title: "分野別：消防法令", type: "特化演習" },
-              { title: "基礎的な物理・化学", type: "計算攻略" },
-              { title: "危険物の性質と消火", type: "暗記徹底" },
-              { title: "本番形式：模擬試験", type: "35問フル" },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="group cursor-pointer rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:border-red-200 hover:shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-red-500">{item.type}</span>
-                    <h3 className="mt-1 text-lg font-bold text-zinc-800">{item.title}</h3>
-                  </div>
-                  <span className="text-zinc-300 transition-transform group-hover:translate-x-1">
-                    →
-                  </span>
+          <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
+            {loading && !quiz ? (
+              <p className="py-12 text-center text-zinc-500">読み込み中...</p>
+            ) : !quiz ? (
+              <p className="py-12 text-center text-zinc-500">
+                問題が見つかりません。Supabaseのquizテーブルを確認してください。
+              </p>
+            ) : (
+              <>
+                <p className="mb-6 text-lg font-medium text-zinc-800">{quiz.question}</p>
+
+                <div className="space-y-3">
+                  {quiz.choices.map((choice, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSelect(i)}
+                      disabled={answered}
+                      className={`block w-full rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors ${
+                        selectedIndex === i
+                          ? "border-red-400 bg-red-50 text-zinc-800"
+                          : answered
+                            ? i === quiz.correct_index
+                              ? "border-green-400 bg-green-50 text-zinc-800"
+                              : "border-zinc-200 bg-zinc-50 text-zinc-500"
+                            : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50"
+                      }`}
+                    >
+                      <span className="mr-2 font-bold text-zinc-500">{["①", "②", "③", "④"][i]}</span>
+                      {choice}
+                    </button>
+                  ))}
                 </div>
-              </div>
-            ))}
+
+                {!answered && (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      onClick={handleSubmit}
+                      disabled={selectedIndex === null}
+                      className="rounded-sm bg-red-500 px-8 py-3 font-bold text-white transition-colors hover:bg-red-600 disabled:bg-zinc-300 disabled:text-zinc-500"
+                    >
+                      判定する
+                    </button>
+                  </div>
+                )}
+
+                {answered && selectedIndex !== null && (
+                  <div className="mt-8 space-y-4 border-t border-zinc-200 pt-6">
+                    <p
+                      className={`text-center text-lg font-bold ${
+                        isCorrect ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {isCorrect ? "正解！" : "不正解"}
+                    </p>
+
+                    <div className="space-y-3">
+                      <p className="text-sm font-bold text-zinc-700">全選択肢の解説</p>
+                      {quiz.explanations.map((exp, i) => (
+                        <div
+                          key={i}
+                          className={`rounded-lg border px-4 py-3 text-sm ${
+                            i === quiz.correct_index
+                              ? "border-green-200 bg-green-50"
+                              : "border-zinc-200 bg-zinc-50"
+                          }`}
+                        >
+                          <span className="mb-1 block font-bold text-zinc-600">
+                            {["①", "②", "③", "④"][i]} {quiz.choices[i]}
+                          </span>
+                          <p className="text-zinc-700">{exp}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </section>
 
