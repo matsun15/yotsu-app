@@ -20,11 +20,7 @@ export default function QuizPage() {
   }, []);
 
   const initQuiz = async () => {
-    // 💡 全件取得してランダムシャッフル（これで3問ループを解消）
-    const { data } = await supabase
-      .from("quiz")
-      .select("*");
-
+    const { data } = await supabase.from("quiz").select("*");
     if (data && data.length > 0) {
       const shuffled = [...data].sort(() => Math.random() - 0.5);
       setQuizList(shuffled);
@@ -49,7 +45,7 @@ export default function QuizPage() {
       setSelected(null);
       setIsCorrect(null);
     } else {
-      initQuiz(); // 最後まで行ったら再シャッフル
+      initQuiz();
     }
   };
 
@@ -57,8 +53,6 @@ export default function QuizPage() {
 
   return (
     <main className="max-w-2xl mx-auto bg-white min-h-screen font-sans text-gray-900">
-      
-      {/* 💡 ヘッダー：Matchuda風にミニマルに（乙4.jpの魂を添えて） */}
       <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
         <span className="text-xl font-bold tracking-tighter text-gray-800">乙4.jp</span>
         <span className="text-sm font-medium text-gray-400">
@@ -74,7 +68,6 @@ export default function QuizPage() {
           {quiz.question}
         </h2>
 
-        {/* 💡 選択肢：Matchudaそのままのシームレス・リスト形式 */}
         <div className="space-y-0 border-t border-gray-100">
           {quiz.choices.map((choice: string, index: number) => {
             const isSelected = selected === index;
@@ -112,9 +105,8 @@ export default function QuizPage() {
         </div>
       </div>
 
-      {/* 💡 解説：Matchuda風に下に流れるように配置 */}
       {selected !== null && (
-        <div className="px-6 md:px-10 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="px-6 md:px-10 pb-20">
           <div className="mt-8 mb-10">
             <h3 className="text-lg font-bold mb-6 text-gray-800">解説</h3>
             <div className="space-y-4 text-sm leading-relaxed text-gray-500">
@@ -133,8 +125,14 @@ export default function QuizPage() {
             </div>
           )}
 
-          <div className="flex justify-between items-center border-t border-gray-100 pt-8">
-            <span className="text-gray-400 text-2xl">〈</span>
-            <button
-              onClick={nextQuiz}
-              className="px
+          <button
+            onClick={nextQuiz}
+            className="w-full py-4 text-center text-sm font-bold text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50"
+          >
+            次の問題へ →
+          </button>
+        </div>
+      )}
+    </main>
+  );
+}
