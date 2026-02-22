@@ -6,8 +6,12 @@ create table if not exists quiz (
   question text not null,
   choices jsonb not null default '[]',      -- 選択肢4つの配列 ["A", "B", "C", "D"]
   correct_index smallint not null check (correct_index >= 0 and correct_index <= 3),
-  explanations jsonb not null default '[]' -- 各選択肢の解説4つの配列
+  explanations jsonb not null default '[]', -- 各選択肢の解説4つの配列
+  advice text -- 合格者アドバイス（任意）
 );
+
+-- 既存テーブルにadvice列を追加する場合:
+-- alter table quiz add column if not exists advice text;
 
 -- RLSを有効にする場合（任意）
 -- alter table quiz enable row level security;
