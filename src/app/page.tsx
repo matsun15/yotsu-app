@@ -5,8 +5,8 @@ import { useState, useMemo } from 'react';
 const dummyQuestions = [
   {
     id: 1,
-    category: "기초화학", // カテゴリ
-    problemNumber: "1번", // 問題番号
+    category: "基礎化学",
+    problemNumber: "問1",
     question: "次のうち、ガソリンの性質として正しいのはどれか？",
     options: [
       "常温常圧で液体であり、沸点は40～200℃の範囲にある",
@@ -28,7 +28,7 @@ const dummyQuestions = [
   {
     id: 2,
     category: "指定数量",
-    problemNumber: "2番",
+    problemNumber: "問2",
     question: "危険物の指定数量に関する説明として、正しいのはどれか？",
     options: [
       "ガソリンの指定数量は200Lである",
@@ -50,7 +50,7 @@ const dummyQuestions = [
   {
     id: 3,
     category: "消火方法",
-    problemNumber: "3番",
+    problemNumber: "問3",
     question: "消火活動時の注意点として、正しいのはどれか？",
     options: [
       "ガソリン火災には水を大量に使用する",
@@ -103,7 +103,7 @@ export default function QuizPage() {
   return (
     <div className="flex flex-col h-screen bg-white">
       
-      {/* ===== 上部：問題情報 ===== */}
+      {/* ===== 上部：問題情報（固定） ===== */}
       <div className="flex-none px-4 py-3 bg-gray-50 border-b">
         <div className="text-xs text-gray-600 mb-1">
           {quiz.category} • {quiz.problemNumber}
@@ -113,7 +113,7 @@ export default function QuizPage() {
         </h2>
       </div>
 
-      {/* ===== 中部：選択肢＋結果＋解説 ===== */}
+      {/* ===== 中部：選択肢＋結果＋解説（スクロール可能） ===== */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
         
         {/* 選択肢 */}
@@ -124,16 +124,16 @@ export default function QuizPage() {
               onClick={() => handleAnswer(index)}
               className={`w-full text-left p-3 rounded-lg border-2 transition-all flex items-start gap-3 ${
                 selected === index
-                  ? isCorrect && index === quiz.correctIndex
+                  ? index === quiz.correctIndex
                     ? 'bg-green-50 border-green-500'
                     : 'bg-red-50 border-red-400'
                   : 'border-gray-300 hover:border-gray-400'
               }`}
             >
-              {/* 番号（丸で囲む） */}
+              {/* 番号（丸数字） */}
               <div className={`flex-none w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                 selected === index
-                  ? isCorrect && index === quiz.correctIndex
+                  ? index === quiz.correctIndex
                     ? 'bg-green-500 text-white'
                     : 'bg-red-400 text-white'
                   : 'bg-gray-200 text-gray-700'
@@ -149,15 +149,16 @@ export default function QuizPage() {
         {/* 回答後のフィードバック */}
         {selected !== null && (
           <div className="mb-6">
+            {/* ✅/❌アイコンを削除し、色のみで伝える */}
             <p className={`text-base font-bold mb-2 ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-              {isCorrect ? '✅ 正解！' : '❌ 不正解'}
+              {isCorrect ? '正解' : '不正解'}
             </p>
 
             <p className="text-sm text-gray-700 mb-3 font-medium bg-blue-50 p-2 rounded">
               💡 {quiz.advice}
             </p>
 
-            {/* 詳細解説 */}
+            {/* 詳細解説トグルボタン */}
             <button
               onClick={() => setShowDetails(!showDetails)}
               className="text-blue-600 text-sm font-medium underline mb-2"
@@ -187,7 +188,7 @@ export default function QuizPage() {
         <div className="h-4" />
       </div>
 
-      {/* ===== 下部：ナビゲーション（Machuda風） ===== */}
+      {/* ===== 下部：ナビゲーション（固定・Machuda風） ===== */}
       <div className="flex-none flex items-center justify-between px-6 py-4 border-t bg-white">
         
         <button
