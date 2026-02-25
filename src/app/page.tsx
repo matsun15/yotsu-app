@@ -97,17 +97,17 @@ export default function QuizPage() {
     alert("後でここに「トップメニューに戻る機能」を作ります！");
   };
 
-  // 「問題選択」ボタンを押した時の処理を追加
   const handleSelectQuestion = () => {
     alert("後でここに「全問題の一覧（グリッド）から好きな問題にジャンプする機能」を作ります！");
   };
 
   return (
+    // h-[100dvh] に変更し、スマホのアドレスバー等に隠れないようにしています
     <div className="flex flex-col h-[100dvh] w-screen bg-white overflow-hidden text-gray-900">
       
-      {/* ===== 上部：スマホ風ヘッダー ＆ 問題情報（固定・Sticky） ===== */}
+      {/* ===== 上部：スマホ風ヘッダー（※ここだけ固定） ===== */}
       <div className="flex-none sticky top-0 bg-white border-b border-gray-200 z-10">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3">
           <button 
             onClick={handleBackToMenu}
             className="p-2 -ml-2 text-gray-600 active:bg-gray-100 rounded-full transition-colors"
@@ -121,20 +121,24 @@ export default function QuizPage() {
           </h1>
           <div className="w-10"></div>
         </div>
+      </div>
 
-        <div className="px-5 py-4">
+      {/* ===== 中部：問題文＋選択肢＋解説（すべて一緒にスクロール） ===== */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        
+        {/* ▼▼ 問題文をスクロールエリアに移動しました ▼▼ */}
+        <div className="px-5 pt-6 pb-4">
           <div className="text-xs text-gray-500 mb-2 font-medium">
             {quiz.category}
           </div>
-          <h2 className="text-sm font-semibold leading-relaxed">
+          <h2 className="text-base font-semibold leading-relaxed text-gray-900">
             {currentIndex + 1}. {quiz.question}
           </h2>
         </div>
-      </div>
+        {/* ▲▲ ここまで ▲▲ */}
 
-      {/* ===== 中部：選択肢＋解説（スクロール可能） ===== */}
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="flex flex-col">
+        {/* 選択肢リスト */}
+        <div className="flex flex-col border-t border-gray-100">
           {quiz.options.map((option, index) => {
             const isThisSelected = selected === index;
             const isThisCorrect = index === quiz.correctIndex;
@@ -174,6 +178,7 @@ export default function QuizPage() {
           })}
         </div>
 
+        {/* 回答後の解説エリア */}
         {selected !== null && (
           <div className="px-5 py-6 mb-8 animate-fade-in">
             <h3 className="text-base font-bold mb-4">解説</h3>
@@ -205,10 +210,10 @@ export default function QuizPage() {
         )}
       </div>
 
-      {/* ===== 下部：ナビゲーション（韓国アプリ風に完全再現） ===== */}
-      <div className="flex-none flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-white">
+      {/* ===== 下部：ナビゲーション（固定） ===== */}
+      <div className="flex-none flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         
-        {/* 左矢印（細く大きく） */}
+        {/* 左矢印 */}
         <button
           onClick={handlePrevious}
           disabled={currentIndex === 0}
@@ -235,7 +240,7 @@ export default function QuizPage() {
           </button>
         </div>
 
-        {/* 右矢印（細く大きく） */}
+        {/* 右矢印 */}
         <button
           onClick={handleNext}
           disabled={currentIndex === dummyQuestions.length - 1}
