@@ -103,7 +103,7 @@ export default function QuizPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-white overflow-hidden text-gray-900">
+    <div className="flex flex-col h-[100dvh] w-screen bg-white overflow-hidden text-gray-900">
       
       {/* ===== 上部：スマホ風ヘッダー ＆ 問題情報（固定・Sticky） ===== */}
       <div className="flex-none sticky top-0 bg-white border-b border-gray-200 z-10">
