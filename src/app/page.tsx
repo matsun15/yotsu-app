@@ -74,7 +74,6 @@ export default function QuizPage() {
   const [showDetails, setShowDetails] = useState(false);
 
   const quiz = questions[currentIndex];
-  const isCorrect = selected === quiz.correctIndex;
 
   const handleAnswer = (index: number) => {
     if (selected !== null) return;
@@ -155,27 +154,31 @@ export default function QuizPage() {
 
         {/* 選択肢 */}
         {quiz.options.map((option, index) => {
-          // Machuda式の色分け
+          // Matchuda式の色分け
           let bgColor = '#fff';
-          let numBg = '#f3f4f6';
+          let numBg = '#fff';
           let numColor = '#374151';
+          let numBorder = '1px solid #6b7280';
           
           if (selected !== null) {
             if (index === selected && index !== quiz.correctIndex) {
-              // 自分が選んだ間違い → 全体ピンク
-              bgColor = '#fee2e2';
-              numBg = '#fecaca';
-              numColor = '#dc2626';
+              // 自分が選んだ間違い
+              bgColor = '#fae8e8';       
+              numBg = '#eb6a6a';         
+              numColor = '#ffffff';      
+              numBorder = '1px solid #eb6a6a';
             } else if (index === quiz.correctIndex) {
-              // 正解 → 数字だけ緑、背景は白
+              // 正解
               bgColor = '#fff';
-              numBg = '#22c55e';
-              numColor = '#fff';
+              numBg = '#50b875';         
+              numColor = '#ffffff';      
+              numBorder = '1px solid #50b875';
             } else {
-              // その他 → 通常表示
+              // その他
               bgColor = '#fff';
-              numBg = '#f3f4f6';
+              numBg = '#fff';
               numColor = '#9ca3af';
+              numBorder = '1px solid #d1d5db';
             }
           }
 
@@ -201,6 +204,7 @@ export default function QuizPage() {
                 borderRadius: '50%',
                 backgroundColor: numBg,
                 color: numColor,
+                border: numBorder,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -299,23 +303,24 @@ export default function QuizPage() {
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {quiz.explanations.map((exp, i) => {
-                    // 解説内でも自分が選んだ間違いに色をつける
+                    // 解説内もMatchudaスタイルに合わせる
                     let expBg = '#fff';
-                    let expNumBg = '#e5e7eb';
+                    let expNumBg = '#fff';
                     let expNumColor = '#6b7280';
-                    let expBorder = '#e5e7eb';
+                    let expNumBorder = '1px solid #6b7280';
+                    let expBoxBorder = '#e5e7eb';
                     
                     if (i === quiz.correctIndex) {
-                      // 正解
-                      expNumBg = '#22c55e';
+                      expNumBg = '#50b875';
                       expNumColor = '#fff';
-                      expBorder = '#bbf7d0';
+                      expNumBorder = '1px solid #50b875';
+                      expBoxBorder = '#bbf7d0';
                     } else if (i === selected) {
-                      // 自分が選んだ間違い
-                      expBg = '#fef2f2';
-                      expNumBg = '#fecaca';
-                      expNumColor = '#dc2626';
-                      expBorder = '#fecaca';
+                      expBg = '#fae8e8';
+                      expNumBg = '#eb6a6a';
+                      expNumColor = '#fff';
+                      expNumBorder = '1px solid #eb6a6a';
+                      expBoxBorder = '#fecaca';
                     }
                     
                     return (
@@ -327,7 +332,7 @@ export default function QuizPage() {
                           padding: '12px',
                           backgroundColor: expBg,
                           borderRadius: '8px',
-                          border: `1px solid ${expBorder}`
+                          border: `1px solid ${expBoxBorder}`
                         }}
                       >
                         <div style={{
@@ -337,6 +342,7 @@ export default function QuizPage() {
                           borderRadius: '50%',
                           backgroundColor: expNumBg,
                           color: expNumColor,
+                          border: expNumBorder,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
