@@ -398,7 +398,8 @@ export default function QuizPage() {
             fontSize: '15px', 
             fontWeight: '500', 
             lineHeight: '1.7',
-            color: '#111827'
+            color: '#111827',
+            whiteSpace: 'pre-wrap'
           }}>
             {currentIndex + 1}. {quiz.question}
           </div>
@@ -506,8 +507,8 @@ export default function QuizPage() {
               <div style={{ 
                 fontSize: '14px', 
                 lineHeight: '1.6',
-                color: '#374151'
-				whiteSpace: 'pre-wrap'  //
+                color: '#374151',
+                whiteSpace: 'pre-wrap'
               }}>
                 {quiz.point}
               </div>
