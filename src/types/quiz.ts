@@ -10,9 +10,10 @@ export type Question = {
   exam_term: number;
   category: string;
   subcategory: string;
+  difficulty: number;
   question_text: string;
   hint_text: string | null;
-  mnemonic_text?: string | null; // ★追加：語呂合わせ（あってもなくてもOKなオプショナル型）
+  mnemonic_text?: string | null;
   pitfall_text: string | null;
   choices: Choice[];
 };
