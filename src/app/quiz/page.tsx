@@ -121,7 +121,7 @@ export default function QuizPage() {
           </svg>
         </button>
         <div className="flex-1 text-center font-bold text-gray-800 text-sm sm:text-base">
-          {currentQuestion.category} 第{currentQuestion.exam_term}回 {currentIndex + 1}番
+          {currentQuestion.category} 第{currentQuestion.exam_term}回 問{currentIndex + 1}
         </div>
         <div className="w-6"></div>
       </header>
@@ -179,6 +179,7 @@ export default function QuizPage() {
             <h2 className="text-lg font-bold mb-4 tracking-wide border-l-4 border-gray-800 pl-3">解説</h2>
             
             <div className="mb-6 space-y-4">
+              {/* ポイント（結論） */}
               {hintData && (
                 <div className="leading-relaxed bg-yellow-50/70 p-4 rounded-lg border border-yellow-100">
                   <span className="inline-block bg-yellow-300 text-gray-900 text-[11px] font-black px-2 py-1 rounded-sm mr-2 align-middle tracking-wider mb-1 sm:mb-0">
@@ -189,7 +190,22 @@ export default function QuizPage() {
                   </span>
                 </div>
               )}
+
+              {/* ★追加：語呂合わせ専用パネル（さわやかなブルー系） */}
+              {currentQuestion.mnemonic_text && (
+                <div className="bg-blue-50/60 p-4 rounded-lg border border-blue-100 shadow-sm relative overflow-hidden mt-4">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-400"></div>
+                  <div className="flex items-center gap-2 mb-1.5 pl-1">
+                    <span className="text-lg leading-none">🎵</span>
+                    <span className="font-bold text-blue-900 text-[13px] tracking-widest">語呂合わせで覚える！</span>
+                  </div>
+                  <p className="font-bold text-blue-800 text-[15px] leading-relaxed pl-1">
+                    {currentQuestion.mnemonic_text}
+                  </p>
+                </div>
+              )}
               
+              {/* 落とし穴 */}
               {pitfallText && (
                 <div className="flex gap-2 items-start pl-2">
                   <span className="text-base leading-none mt-0.5">🐾</span>
@@ -212,15 +228,13 @@ export default function QuizPage() {
         )}
       </main>
 
-      {/* 画面下部固定ナビ（Machuda仕様） */}
+      {/* 画面下部固定ナビ */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-[60px] flex justify-between items-center px-4 z-40 pb-safe">
         
-        {/* 左：戻るボタン */}
         <button onClick={handlePrev} className="p-2 text-gray-400 hover:text-gray-800 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
         </button>
         
-        {/* 中央：進捗 ＋ 問題選択ボタン */}
         <div className="flex items-center gap-3">
           <span className="font-bold text-[16px] text-gray-900 tracking-wide">
             {currentIndex + 1} / {quizQuestions.length}
@@ -233,7 +247,6 @@ export default function QuizPage() {
           </button>
         </div>
         
-        {/* 右：次へボタン */}
         <button onClick={handleNext} className="p-2 text-gray-400 hover:text-gray-800 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
         </button>
@@ -264,7 +277,6 @@ export default function QuizPage() {
                   if (ans?.isCorrect === true) bgClass = "bg-[#10B981] text-white border-none"; // 正解（緑）
                   else if (ans?.isCorrect === false) bgClass = "bg-[#EF4444] text-white border-none"; // 不正解（赤）
                   
-                  // ★余計なringClass（二重丸）を完全に削除しました
                   return (
                     <button 
                       key={i} 
