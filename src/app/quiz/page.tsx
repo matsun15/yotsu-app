@@ -48,7 +48,6 @@ export default function QuizPage() {
   const handleNext = () => jumpToQuestion((currentIndex + 1) % quizQuestions.length);
   const handlePrev = () => jumpToQuestion((currentIndex - 1 + quizQuestions.length) % quizQuestions.length);
 
-  // ★修正3：更新（リセット）ではなく、戻るボタンとしての動作に変更
   const handleClose = () => {
     window.confirm("トップページへ戻りますか？（※現在はダミーです）");
   };
@@ -158,7 +157,7 @@ export default function QuizPage() {
         {hasAnswered && (
           <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             
-            {/* ★修正2：正解と不正解で表示を変える（くどさ解消） */}
+            {/* 正解・不正解の表示エリア */}
             {currentAnswer.isCorrect ? (
               <div className="bg-white rounded-lg py-3 px-4 mb-6 border border-gray-200 flex justify-center items-center shadow-sm">
                 <div className="text-[15px] font-bold text-gray-800">
@@ -213,7 +212,7 @@ export default function QuizPage() {
         )}
       </main>
 
-      {/* ★修正1：画面下部固定ナビ（1枚目のMachuda画像を完全再現） */}
+      {/* 画面下部固定ナビ（Machuda仕様） */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-[60px] flex justify-between items-center px-4 z-40 pb-safe">
         
         {/* 左：戻るボタン */}
@@ -265,13 +264,12 @@ export default function QuizPage() {
                   if (ans?.isCorrect === true) bgClass = "bg-[#10B981] text-white border-none"; // 正解（緑）
                   else if (ans?.isCorrect === false) bgClass = "bg-[#EF4444] text-white border-none"; // 不正解（赤）
                   
-                  const ringClass = currentIndex === i ? "ring-2 ring-offset-2 ring-gray-300" : "";
-
+                  // ★余計なringClass（二重丸）を完全に削除しました
                   return (
                     <button 
                       key={i} 
                       onClick={() => jumpToQuestion(i)}
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-[15px] mx-auto active:scale-90 transition-all ${bgClass} ${ringClass}`}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center text-[15px] mx-auto active:scale-90 transition-all ${bgClass}`}
                     >
                       {i + 1}
                     </button>
