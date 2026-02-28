@@ -1,103 +1,114 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { quizQuestions } from "@/constants/questions";
 import { Choice } from "@/types/quiz";
 
+// 全問題の解答状態を管理するための型
+type AnswerState = {
+  selectedChoice: number | null;
+  isCorrect: boolean | null;
+};
+
 export default function QuizPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
+  // 全75問の解答状態を記憶する配列
+  const [answers, setAnswers] = useState<AnswerState[]>([]);
+  const [showModal, setShowModal] = useState(false);
 
-  if (!quizQuestions || quizQuestions.length === 0) {
-    return <div className="p-10 text-center">問題データを読み込んでいます...</div>;
+  // 初回マウント時に配列を初期化
+  useEffect(() => {
+    if (quizQuestions) {
+      setAnswers(new Array(quizQuestions.length).fill({ selectedChoice: null, isCorrect: null }));
+    }
+  }, []);
+
+  if (!quizQuestions || quizQuestions.length === 0 || answers.length === 0) {
+    return <div className="p-10 text-center text-gray-500">問題データを読み込んでいます...</div>;
   }
 
   const currentQuestion = quizQuestions[currentIndex];
-  // 正解の選択肢の番号を取得
   const correctChoiceNumber = currentQuestion.choices.find(c => c.is_correct)?.order_index;
+  const currentAnswer = answers[currentIndex];
+  const hasAnswered = currentAnswer.selectedChoice !== null;
 
   // --------------------------------------------------------
   // イベントハンドラ
   // --------------------------------------------------------
-  const handleChoiceClick = (index: number) => {
-    if (showExplanation) return;
-    setSelectedChoice(index);
-    setShowExplanation(true);
+  const handleChoiceClick = (choiceIndex: number, isCorrect: boolean) => {
+    if (hasAnswered) return; // 既に解答済みの場合は無効化
+
+    const newAnswers = [...answers];
+    newAnswers[currentIndex] = { selectedChoice: choiceIndex, isCorrect };
+    setAnswers(newAnswers);
   };
 
-  const handleNext = () => {
-    setSelectedChoice(null);
-    setShowExplanation(false);
-    setCurrentIndex((prev) => (prev + 1) % quizQuestions.length);
-    window.scrollTo({ top: 0, behavior: "smooth" }); // ★修正③：画面トップへ戻る
-  };
-
-  const handlePrev = () => {
-    setSelectedChoice(null);
-    setShowExplanation(false);
-    setCurrentIndex((prev) => (prev - 1 + quizQuestions.length) % quizQuestions.length);
-    window.scrollTo({ top: 0, behavior: "smooth" }); // ★修正③：画面トップへ戻る
-  };
-
-  const handleReset = () => {
-    // ※今回は簡易的にリセットのみ。後日確認ダイアログ（⑧）を追加予定
-    setSelectedChoice(null);
-    setShowExplanation(false);
+  const jumpToQuestion = (index: number) => {
+    setCurrentIndex(index);
+    setShowModal(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleNext = () => {
+    jumpToQuestion((currentIndex + 1) % quizQuestions.length);
+  };
+
+  const handlePrev = () => {
+    jumpToQuestion((currentIndex - 1 + quizQuestions.length) % quizQuestions.length);
+  };
+
+  const handleReset = () => {
+    if (window.confirm("進行状況をリセットして最初からやり直しますか？")) {
+      setAnswers(new Array(quizQuestions.length).fill({ selectedChoice: null, isCorrect: null }));
+      jumpToQuestion(0);
+    }
+  };
+
   // --------------------------------------------------------
-  // スタイル制御（Machuda式）
+  // スタイル制御
   // --------------------------------------------------------
   const getRowStyle = (choice: Choice) => {
-    if (!showExplanation) return "bg-transparent hover:bg-gray-50";
-    if (choice.is_correct && selectedChoice === choice.order_index) return "bg-green-50"; 
-    if (!choice.is_correct && selectedChoice === choice.order_index) return "bg-red-50"; 
+    if (!hasAnswered) return "bg-transparent hover:bg-gray-50";
+    if (choice.is_correct && currentAnswer.selectedChoice === choice.order_index) return "bg-green-50"; 
+    if (!choice.is_correct && currentAnswer.selectedChoice === choice.order_index) return "bg-red-50"; 
     return "bg-transparent"; 
   };
 
   const getCircleStyle = (choice: Choice) => {
-    if (!showExplanation) return "border border-gray-400 text-gray-700 bg-white";
+    if (!hasAnswered) return "border border-gray-400 text-gray-700 bg-white";
     if (choice.is_correct) return "bg-green-500 text-white border-none"; 
-    if (selectedChoice === choice.order_index) return "bg-red-400 text-white border-none"; 
+    if (currentAnswer.selectedChoice === choice.order_index) return "bg-red-400 text-white border-none"; 
     return "border border-gray-400 text-gray-700 bg-white"; 
   };
 
-  // --------------------------------------------------------
-  // テキスト加工関数
-  // --------------------------------------------------------
   const renderQuestionText = (text: string) => {
     const keyword = "\\[Ima" + "ge of (.*?)\\]";
     const imageRegex = new RegExp(keyword, "g");
     const parts = text.split(imageRegex);
 
     return (
-      <div className="space-y-4">
+      <span className="space-y-3 block mt-1">
         {parts.map((part, index) => {
           if (index % 2 === 1) {
             return (
-              <div key={index} className="bg-gray-50 border border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-gray-400 my-4 shadow-inner">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 mb-2 text-gray-300">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
+              <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center text-gray-400 my-3 shadow-inner">
                 <span className="text-xs font-bold tracking-wider">【図解エリア】</span>
                 <span className="text-[10px] mt-1 text-center px-4">{part}</span>
               </div>
             );
           }
           return (
-            <div key={index}>
+            <span key={index}>
               {part.split('\n').map((line, i) => (
                 <span key={i}>
                   {line}
                   {i !== part.split('\n').length - 1 && <br />}
                 </span>
               ))}
-            </div>
+            </span>
           );
         })}
-      </div>
+      </span>
     );
   };
 
@@ -108,9 +119,7 @@ export default function QuizPage() {
     return { label: "ポイント", content: text };
   };
 
-  const getPitfallText = (text: string) => {
-    return text.replace("🐾よくある落とし穴：", "").replace("🐾", "");
-  };
+  const getPitfallText = (text: string) => text.replace("🐾よくある落とし穴：", "").replace("🐾", "");
 
   const hintData = currentQuestion.hint_text ? getHintData(currentQuestion.hint_text) : null;
   const pitfallText = currentQuestion.pitfall_text ? getPitfallText(currentQuestion.pitfall_text) : null;
@@ -118,106 +127,95 @@ export default function QuizPage() {
   return (
     <div className="min-h-screen bg-white pb-24 font-sans text-gray-800">
       
-      {/* ★修正②：上部ヘッダーの固定（sticky top-0 z-50 bg-white を追加） */}
-      <header className="sticky top-0 z-50 bg-white flex items-center p-4 border-b border-gray-200 shadow-sm">
-        <button className="text-gray-600 hover:text-gray-900 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+      {/* ★改善1：ヘッダーの1行圧縮（-60px） */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm flex items-center justify-between px-4 py-3 border-b border-gray-200 shadow-sm text-[15px]">
+        <button onClick={handleReset} className="text-gray-500 hover:text-gray-900 transition-colors p-1 -ml-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <h1 className="flex-1 text-center font-bold text-lg tracking-wider text-gray-800">練習モード</h1>
-        {/* ブックマーク等のダミーアイコン */}
-        <div className="flex gap-3 text-gray-500">
-           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
+        <div className="flex-1 text-center font-bold text-gray-700 flex justify-center items-center gap-2">
+          <span className="truncate max-w-[100px] sm:max-w-none">{currentQuestion.category}</span>
+          <span className="text-gray-300">|</span>
+          <span>第{currentQuestion.exam_term}回</span>
+        </div>
+        <div className="font-bold tracking-widest text-gray-800 w-12 text-right">
+          {currentIndex + 1}/{quizQuestions.length}
         </div>
       </header>
       
-      {/* メインコンテンツ */}
       <main className="p-4 max-w-2xl mx-auto">
         
-        {/* メタ情報 */}
-        <div className="mb-6 text-sm text-gray-700 flex justify-between items-start">
-          <div>
-            <p className="font-bold text-gray-800 text-base">{currentQuestion.category}</p>
-            <p className="text-xs text-gray-500 mt-1">第{currentQuestion.exam_term}回 - {currentQuestion.subcategory}</p>
-          </div>
-        </div>
-
-        {/* 問題文 */}
-        <div className="mb-8 text-[16px] leading-relaxed font-medium">
-          <div className="mb-3 text-xl font-bold text-gray-800">{currentIndex + 1}。</div>
+        {/* ★改善2：問題番号の統合（-24px）とフォントサイズ調整 */}
+        <div className="mb-6 text-[15px] leading-relaxed font-medium text-gray-800">
+          <span className="font-bold text-lg mr-1">{currentIndex + 1}.</span>
           {renderQuestionText(currentQuestion.question_text)}
         </div>
 
-        {/* 選択肢リスト */}
-        <div className="border-t border-gray-200">
+        {/* ★改善3：選択肢の余白を削減（-40px） */}
+        <div className="border-t border-gray-200 mb-6">
           {currentQuestion.choices.map((choice) => (
             <button
               key={choice.order_index}
-              onClick={() => handleChoiceClick(choice.order_index)}
-              disabled={showExplanation}
-              className={`w-full text-left flex items-start gap-4 p-4 border-b border-gray-200 transition-all duration-200 ${getRowStyle(choice)}`}
+              onClick={() => handleChoiceClick(choice.order_index, choice.is_correct)}
+              disabled={hasAnswered}
+              className={`w-full text-left flex items-start gap-3 py-3 px-2 border-b border-gray-200 transition-all duration-200 ${getRowStyle(choice)}`}
             >
-              <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[15px] font-bold transition-colors ${getCircleStyle(choice)}`}>
+              <div className={`shrink-0 w-7 h-7 mt-0.5 rounded-full flex items-center justify-center text-[14px] font-bold transition-colors ${getCircleStyle(choice)}`}>
                 {choice.order_index}
               </div>
-              <div className="pt-[4px] leading-relaxed text-[15px]">
+              <div className="leading-relaxed text-[14px] pt-[2px]">
                 {choice.choice_text}
               </div>
             </button>
           ))}
         </div>
 
-        {/* 解説エリア */}
-        {showExplanation && (
-          <div className="mt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        {/* 解説エリア（解答後のみ表示） */}
+        {hasAnswered && (
+          <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             
-            {/* ★修正⑤：あなたの回答と正解の明示エリア */}
-            <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200 flex flex-col sm:flex-row justify-around items-center gap-2 shadow-sm">
-              <div className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                あなたの回答：
-                <span className={`text-lg font-bold ${selectedChoice === correctChoiceNumber ? 'text-green-600' : 'text-red-500'}`}>
-                  {selectedChoice === correctChoiceNumber ? '✅' : '❌'} {selectedChoice}番
+            {/* ★改善4：回答/正解を1行コンパクトに（中央揃え） */}
+            <div className="bg-gray-50 rounded-lg py-3 px-4 mb-6 border border-gray-200 flex justify-center items-center gap-6 shadow-sm">
+              <div className="text-[14px] font-bold text-gray-600">
+                回答: <span className={`ml-1 text-base ${currentAnswer.isCorrect ? 'text-green-600' : 'text-red-500'}`}>
+                  {currentAnswer.isCorrect ? '✅' : '❌'} {currentAnswer.selectedChoice}
                 </span>
               </div>
-              <div className="hidden sm:block w-px h-6 bg-gray-300"></div> {/* PC用の区切り線 */}
-              <div className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                正解：
-                <span className="text-lg font-bold text-green-600">✅ {correctChoiceNumber}番</span>
+              <div className="w-px h-4 bg-gray-300"></div>
+              <div className="text-[14px] font-bold text-gray-600">
+                正解: <span className="ml-1 text-base text-green-600">✅ {correctChoiceNumber}</span>
               </div>
             </div>
 
-            <h2 className="text-xl font-bold mb-6 tracking-wide border-l-4 border-gray-800 pl-3">解説</h2>
+            <h2 className="text-lg font-bold mb-4 tracking-wide border-l-4 border-gray-800 pl-3">解説</h2>
             
-            {/* ヒント＆落とし穴エリア */}
-            <div className="mb-8 space-y-4">
+            <div className="mb-6 space-y-4">
               {hintData && (
-                <div className="leading-relaxed bg-yellow-50/50 p-4 rounded-lg border border-yellow-100">
+                <div className="leading-relaxed bg-yellow-50/70 p-4 rounded-lg border border-yellow-100">
                   <span className="inline-block bg-yellow-300 text-gray-900 text-[11px] font-black px-2 py-1 rounded-sm mr-2 align-middle tracking-wider mb-1 sm:mb-0">
                     {hintData.label}
                   </span>
-                  {/* ★修正①：青文字を廃止し、ダークグレーの太字に変更 */}
-                  <span className="font-bold text-gray-800 text-[15px] align-middle">
+                  <span className="font-bold text-gray-800 text-[14px] align-middle">
                     {hintData.content}
                   </span>
                 </div>
               )}
               
               {pitfallText && (
-                <div className="flex gap-2 items-start pl-2 pt-2">
-                  <span className="text-lg leading-none mt-0.5">🐾</span>
-                  <p className="text-gray-500 text-[14px] italic leading-relaxed">
+                <div className="flex gap-2 items-start pl-2">
+                  <span className="text-base leading-none mt-0.5">🐾</span>
+                  <p className="text-gray-500 text-[13px] italic leading-relaxed">
                     {pitfallText}
                   </p>
                 </div>
               )}
             </div>
 
-            {/* 選択肢ごとの解説 */}
-            <div className="space-y-4 bg-gray-50/50 p-5 rounded-xl border border-gray-100">
+            <div className="space-y-3 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
               {currentQuestion.choices.map((choice) => (
-                <div key={choice.order_index} className="flex gap-3 text-[14px] leading-relaxed text-gray-700">
-                  <span className="font-bold text-gray-900 shrink-0 mt-0.5 w-[1.2rem] text-center">{choice.order_index}.</span>
+                <div key={choice.order_index} className="flex gap-3 text-[13px] leading-relaxed text-gray-700">
+                  <span className="font-bold text-gray-900 shrink-0 mt-[1px] w-[1rem] text-center">{choice.order_index}.</span>
                   <p>{choice.explanation_detail}</p>
                 </div>
               ))}
@@ -227,37 +225,73 @@ export default function QuizPage() {
       </main>
 
       {/* 画面下部固定のナビゲーションバー */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-16 flex justify-between items-center px-4 z-50 pb-safe">
-        <button 
-          onClick={handleReset} 
-          className="shrink-0 w-10 h-10 flex items-center justify-center bg-gray-800 text-white rounded-full shadow-md active:scale-95 transition-transform hover:bg-gray-700"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-          </svg>
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 h-14 flex justify-between items-center px-2 sm:px-4 z-40 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        
+        <button onClick={handlePrev} className="flex flex-col items-center justify-center w-16 h-full text-gray-500 hover:text-gray-900 active:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
         </button>
         
-        <div className="flex justify-center items-center gap-2 sm:gap-6 flex-1 px-2">
-          <button onClick={handlePrev} className="text-gray-400 hover:text-gray-900 px-2 active:scale-90 transition-all shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-          </button>
-          
-          <span className="font-bold text-base sm:text-lg min-w-[3rem] text-center tracking-widest text-gray-800 shrink-0">
-            {currentIndex + 1}/{quizQuestions.length}
-          </span>
-          
-          {/* ★修正④：スマホで文字が縦書きに潰れるのを防ぐ whitespace-nowrap */}
-          <button className="border border-gray-300 rounded px-2 sm:px-3 py-1.5 text-[12px] sm:text-[13px] font-bold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors whitespace-nowrap shrink-0">
-            問題を選択
-          </button>
-          
-          <button onClick={handleNext} className="text-gray-400 hover:text-gray-900 px-2 active:scale-90 transition-all shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-          </button>
-        </div>
+        {/* ★改善5：「問題を選択」モーダル起動ボタン */}
+        <button 
+          onClick={() => setShowModal(true)} 
+          className="flex-1 mx-2 max-w-[200px] py-2 bg-gray-800 text-white rounded-lg text-[14px] font-bold shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+          問題一覧
+        </button>
         
-        <div className="w-10 shrink-0"></div>
+        <button onClick={handleNext} className="flex flex-col items-center justify-center w-16 h-full text-gray-500 hover:text-gray-900 active:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+        </button>
+
       </div>
+
+      {/* ★実装：全問題モーダル（ナンバーパッド） */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-3xl w-full max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom-10">
+            <div className="flex justify-between items-center p-5 border-b border-gray-100">
+              <div>
+                <h3 className="font-bold text-lg text-gray-800">問題一覧</h3>
+                <p className="text-[12px] text-gray-500 mt-0.5">番号をタップすると該当問題へ移動します</p>
+              </div>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-90 transition-all"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto">
+              <div className="grid grid-cols-5 gap-3 sm:gap-4 max-w-md mx-auto">
+                {quizQuestions.map((_, i) => {
+                  const ans = answers[i];
+                  let bgClass = "bg-white border border-gray-300 text-gray-700"; // 未解答（白）
+                  if (ans?.isCorrect === true) bgClass = "bg-green-500 text-white border-none shadow-sm"; // 正解（緑）
+                  else if (ans?.isCorrect === false) bgClass = "bg-red-500 text-white border-none shadow-sm"; // 不正解（赤）
+                  
+                  // 現在見ている問題はリングをつけて強調
+                  const ringClass = currentIndex === i ? "ring-2 ring-offset-2 ring-gray-800" : "";
+
+                  return (
+                    <button 
+                      key={i} 
+                      onClick={() => jumpToQuestion(i)}
+                      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-lg mx-auto active:scale-90 transition-all ${bgClass} ${ringClass}`}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {/* モーダル下部の安全余白 */}
+            <div className="h-safe pb-8"></div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
